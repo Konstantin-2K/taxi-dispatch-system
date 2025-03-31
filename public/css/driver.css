@@ -1,0 +1,258 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    line-height: 1.6;
+    background-color: #f5f5f5;
+    color: #333;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.driver-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.status-controls {
+    display: flex;
+    align-items: center;
+}
+
+.status-controls label {
+    margin-right: 10px;
+    font-weight: bold;
+}
+
+.status-controls select {
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.requests-section {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.tabs {
+    display: flex;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-btn {
+    padding: 10px 15px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    opacity: 0.7;
+    position: relative;
+}
+
+.tab-btn.active {
+    opacity: 1;
+    font-weight: bold;
+}
+
+.tab-btn.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background-color: #3498db;
+}
+
+.requests-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.request-item {
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #fafafa;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.request-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.status {
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.status.pending {
+    background-color: #f1c40f;
+    color: #7f6000;
+}
+
+.status.accepted {
+    background-color: #3498db;
+    color: #fff;
+}
+
+.status.completed {
+    background-color: #2ecc71;
+    color: #fff;
+}
+
+.status.rejected {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+.request-details {
+    margin-bottom: 15px;
+}
+
+.request-details hr {
+    margin: 8px 0;
+    border: none;
+    border-top: 1px solid #eee;
+}
+
+.request-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+    margin-top: 10px;
+}
+
+.btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background-color 0.2s;
+}
+
+.btn-accept, .btn-primary {
+    background-color: #3498db;
+    color: #fff;
+}
+
+.btn-accept:hover, .btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-reject {
+    background-color: #e74c3c;
+    color: #fff;
+}
+
+.btn-reject:hover {
+    background-color: #c0392b;
+}
+
+.btn-complete, .btn-success {
+    background-color: #2ecc71;
+    color: #fff;
+}
+
+.btn-complete:hover, .btn-success:hover {
+    background-color: #27ae60;
+}
+
+.btn:disabled {
+    background-color: #bdc3c7;
+    cursor: not-allowed;
+}
+
+.navigation-section {
+    background-color: #fff;
+    border-radius: 5px;
+    padding: 15px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.navigation-header {
+    margin-bottom: 15px;
+}
+
+.phase-info {
+    font-size: 18px;
+    font-weight: bold;
+    color: #3498db;
+    margin: 10px 0;
+}
+
+.navigation-controls {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.navigation-frame-container {
+    width: 100%;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid #ddd;
+}
+
+footer {
+    margin-top: 20px;
+    text-align: center;
+    color: #7f8c8d;
+}
+
+@media (max-width: 768px) {
+    .driver-info {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .status-controls {
+        margin-top: 10px;
+    }
+
+    .navigation-controls {
+        flex-direction: column;
+    }
+}

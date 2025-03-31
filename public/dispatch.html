@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taxi Dispatch System - Dispatcher</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="css/dispatch.css">
+    <style>
+        .autocomplete-container {
+            position: relative;
+        }
+        .autocomplete-items {
+            position: absolute;
+            border: 1px solid #d4d4d4;
+            border-top: none;
+            z-index: 99;
+            top: 100%;
+            left: 0;
+            right: 0;
+            max-height: 200px;
+            overflow-y: auto;
+            background-color: white;
+        }
+        .autocomplete-items div {
+            padding: 10px;
+            cursor: pointer;
+            background-color: #fff;
+            border-bottom: 1px solid #d4d4d4;
+        }
+        .autocomplete-items div:hover {
+            background-color: #e9e9e9;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>Taxi Dispatch Center</h1>
+        <div class="control-panel">
+            <button id="clearBtn">Clear Pins</button>
+            <button id="dispatchBtn" disabled>Dispatch Taxi</button>
+        </div>
+    </header>
+
+    <main>
+        <div class="map-container">
+            <div id="map"></div>
+            <div class="map-instructions">
+                <div class="autocomplete-container">
+                    <label for="startPoint">Start Point:</label>
+                    <input type="text" id="startPoint" placeholder="Enter start location">
+                    <div id="startPointAutocomplete" class="autocomplete-items"></div>
+                </div>
+
+                <div class="autocomplete-container">
+                    <label for="endPoint">End Point:</label>
+                    <input type="text" id="endPoint" placeholder="Enter destination">
+                    <div id="endPointAutocomplete" class="autocomplete-items"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <div class="active-requests">
+                <h2>Active Requests</h2>
+                <div id="requestsList"></div>
+            </div>
+
+            <div class="drivers-list">
+                <h2>Available Drivers</h2>
+                <div id="driversList"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Taxi Dispatch System &copy; 2025</p>
+    </footer>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="/socket.io/socket.io.js"></script>
+<script src="js/dispatch.js"></script>
+</body>
+</html>
