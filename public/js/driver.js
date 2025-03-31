@@ -9,12 +9,18 @@ document.addEventListener('DOMContentLoaded', function () {
     let navigationPhase = null;
     let map = null;
     let routeLayer = null;
+    let driverMarker = null;
+    let destinationMarker = null;
+    let infoBoxControl = null;
     const ORS_API_KEY = '5b3ce3597851110001cf6248a9eb2e6c73314236a94dfb0ad2872f9f';
     let locationPermissionRequested = false;
+    let isInitialRouteLoad = true; // Flag to track if this is the first route load
+    let isRefreshing = false; // Flag to track if we're refreshing a route
 
     let locationWatchId = null;
     let locationUpdateInterval = null;
-    const LOCATION_UPDATE_FREQUENCY = 3000;
+    const LOCATION_UPDATE_FREQUENCY = 2000;
+    const DRIVER_ZOOM_LEVEL = 16; // Consistent zoom level for driver focus
 
     // DOM elements
     const driverNameElement = document.getElementById('driverName');
@@ -28,6 +34,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const navToPickupBtn = document.getElementById('nav-to-pickup');
     const navToDropoffBtn = document.getElementById('nav-to-dropoff');
     const completeNavigationBtn = document.getElementById('complete-navigation');
+
+    // Add this after the other buttons in the navigation section
+    const simulateBtn = document.createElement('button');
+    simulateBtn.id = 'simulate-driving';
+    simulateBtn.textContent = 'Simulate Driving';
+    simulateBtn.className = 'btn';
+    simulateBtn.addEventListener('click', simulateDriving);
+    document.querySelector('.navigation-controls').appendChild(simulateBtn);
 
     const header = document.querySelector('header .driver-info');
     const logoutBtn = document.createElement('button');
@@ -51,6 +65,30 @@ document.addEventListener('DOMContentLoaded', function () {
     fetchRequests();
     setupEventListeners();
     initializeLocationTracking();
+
+    // Check for active navigation session on page load
+    checkForActiveNavigation();
+
+    function checkForActiveNavigation() {
+        fetch('/api/requests')
+            .then(response => response.json())
+            .then(requests => {
+                const activeRequest = requests.find(req =>
+                    req.status === 'accepted' &&
+                    req.driver_id === parseInt(driverId)
+                );
+
+                if (activeRequest) {
+                    currentRequest = activeRequest;
+                    isRefreshing = true;
+                    showNavigation();
+                    startNavigation('to_pickup');
+                }
+            })
+            .catch(error => {
+                console.error('Error checking for active navigation:', error);
+            });
+    }
 
     function setupEventListeners() {
         statusSelectElement.addEventListener('change', function () {
@@ -150,24 +188,31 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(driver => {
                 driverData = driver;
 
-                if (map && navigationPhase === 'to_pickup') {
-                    map.eachLayer(layer => {
-                        if (layer instanceof L.Marker && layer.getPopup().getContent() === 'Your Location') {
-                            map.removeLayer(layer);
+                if (map && (navigationPhase === 'to_pickup' || navigationPhase === 'to_dropoff')) {
+                    // Update driver marker position
+                    if (driverMarker) {
+                        driverMarker.setLatLng([lat, lng]);
+                    } else {
+                        driverMarker = L.marker([lat, lng]).addTo(map)
+                            .bindPopup('Your Location');
+                    }
+
+                    if (currentRequest) {
+                        let destLat, destLng;
+
+                        if (navigationPhase === 'to_pickup') {
+                            destLat = currentRequest.pickup_lat;
+                            destLng = currentRequest.pickup_lng;
+                        } else { // to_dropoff
+                            destLat = currentRequest.dropoff_lat;
+                            destLng = currentRequest.dropoff_lng;
                         }
-                    });
 
-                    const newMarker = L.marker([lat, lng]).addTo(map)
-                        .bindPopup('Your Location')
-                        .openPopup();
+                        // Update the route without showing loading indicator for updates
+                        updateRoute(lng, lat, destLng, destLat);
 
-                    if (currentRequest && navigationPhase === 'to_pickup') {
-                        getDirections(
-                            lng,
-                            lat,
-                            currentRequest.pickup_lng,
-                            currentRequest.pickup_lat
-                        );
+                        // Center map on driver with consistent zoom level
+                        map.setView([lat, lng], DRIVER_ZOOM_LEVEL);
                     }
                 }
             })
@@ -235,8 +280,6 @@ document.addEventListener('DOMContentLoaded', function () {
             .then(requests => {
                 activeRequests = requests;
                 renderRequestsList();
-
-
             })
             .catch(error => {
                 console.error('Error fetching requests:', error);
@@ -303,6 +346,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 } else if (request.status === 'accepted' && request.driver_id === parseInt(driverId)) {
                     actionButtons = `
                         <div class="request-actions">
+                          <button class="btn btn-navigate" data-request-id="${request.id}">Navigate</button>
                           <button class="btn btn-complete" data-request-id="${request.id}">Complete</button>
                         </div>
                     `;
@@ -333,6 +377,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const acceptButtons = document.querySelectorAll('.btn-accept');
         const rejectButtons = document.querySelectorAll('.btn-reject');
         const completeButtons = document.querySelectorAll('.btn-complete');
+        const navigateButtons = document.querySelectorAll('.btn-navigate');
 
         acceptButtons.forEach(btn => {
             btn.addEventListener('click', function () {
@@ -357,6 +402,17 @@ document.addEventListener('DOMContentLoaded', function () {
                 updateRequestStatus(requestId, 'completed');
             });
         });
+
+        navigateButtons.forEach(btn => {
+            btn.addEventListener('click', function () {
+                const requestId = this.dataset.requestId;
+                currentRequest = activeRequests.find(r => r.id === parseInt(requestId));
+                if (currentRequest) {
+                    showNavigation();
+                    startNavigation('to_pickup');
+                }
+            });
+        });
     }
 
     function updateRequestStatus(requestId, status) {
@@ -379,6 +435,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (status === 'accepted') {
                     currentRequest = updatedRequest;
+                    isInitialRouteLoad = true;
 
                     if (driverData.last_location_lat && driverData.last_location_lng) {
                         fetchETA(driverData.last_location_lat, driverData.last_location_lng, currentRequest.pickup_lat, currentRequest.pickup_lng)
@@ -430,7 +487,7 @@ document.addEventListener('DOMContentLoaded', function () {
         mapDiv.style.height = '600px';
         navigationFrameContainer.appendChild(mapDiv);
 
-        map = L.map('mapContainer').setView([driverData.last_location_lat, driverData.last_location_lng], 13);
+        map = L.map('mapContainer').setView([driverData.last_location_lat, driverData.last_location_lng], DRIVER_ZOOM_LEVEL);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
@@ -457,9 +514,16 @@ document.addEventListener('DOMContentLoaded', function () {
             requestsSection.style.display = 'block';
         }
 
+        // Reset all map-related globals
         if (map) {
             map.remove();
             map = null;
+        }
+        routeLayer = null;
+        driverMarker = null;
+        destinationMarker = null;
+        if (infoBoxControl) {
+            infoBoxControl = null;
         }
     }
 
@@ -470,6 +534,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         navigationPhase = phase;
+        isInitialRouteLoad = true;
 
         if (!map) {
             map = setupLeaflet();
@@ -495,40 +560,54 @@ document.addEventListener('DOMContentLoaded', function () {
             endLng = currentRequest.dropoff_lng;
         }
 
+        // Clear existing markers and routes but retain the map
         if (map) {
             map.eachLayer(layer => {
                 if (layer instanceof L.Marker || layer instanceof L.Polyline) {
                     map.removeLayer(layer);
                 }
             });
+
+            // Remove the info box if it exists
+            if (infoBoxControl) {
+                map.removeControl(infoBoxControl);
+                infoBoxControl = null;
+            }
         }
 
-        const startMarker = L.marker([startLat, startLng]).addTo(map)
-            .bindPopup(phase === 'to_pickup' ? 'Your Location' : 'Pickup Location')
-            .openPopup();
+        // Create new markers
+        driverMarker = L.marker([startLat, startLng]).addTo(map)
+            .bindPopup(phase === 'to_pickup' ? 'Your Location' : 'Pickup Location');
 
-        const endMarker = L.marker([endLat, endLng]).addTo(map)
+        destinationMarker = L.marker([endLat, endLng]).addTo(map)
             .bindPopup(phase === 'to_pickup' ? 'Pickup Location' : 'Dropoff Location');
+
+        // Show loading indicator only for initial route calculation
+        if (isInitialRouteLoad) {
+            const loadingIndicator = document.createElement('div');
+            loadingIndicator.id = 'loading-indicator';
+            loadingIndicator.textContent = 'Loading route...';
+            loadingIndicator.style.position = 'absolute';
+            loadingIndicator.style.top = '50%';
+            loadingIndicator.style.left = '50%';
+            loadingIndicator.style.transform = 'translate(-50%, -50%)';
+            loadingIndicator.style.padding = '10px';
+            loadingIndicator.style.backgroundColor = 'white';
+            loadingIndicator.style.borderRadius = '5px';
+            loadingIndicator.style.boxShadow = '0 0 10px rgba(0,0,0,0.2)';
+            loadingIndicator.style.zIndex = '1000';
+
+            const mapContainer = document.querySelector('#mapContainer');
+            if (mapContainer) {
+                mapContainer.appendChild(loadingIndicator);
+            }
+        }
 
         getDirections(startLng, startLat, endLng, endLat);
     }
 
-    function getDirections(startLng, startLat, endLng, endLat) {
-        const loadingIndicator = document.createElement('div');
-        loadingIndicator.id = 'loading-indicator';
-        loadingIndicator.textContent = 'Loading route...';
-        loadingIndicator.style.position = 'absolute';
-        loadingIndicator.style.top = '50%';
-        loadingIndicator.style.left = '50%';
-        loadingIndicator.style.transform = 'translate(-50%, -50%)';
-        loadingIndicator.style.padding = '10px';
-        loadingIndicator.style.backgroundColor = 'white';
-        loadingIndicator.style.borderRadius = '5px';
-        loadingIndicator.style.boxShadow = '0 0 10px rgba(0,0,0,0.2)';
-        loadingIndicator.style.zIndex = '1000';
-
-        document.querySelector('#mapContainer').appendChild(loadingIndicator);
-
+    // New function for silent route updates without loading indicators
+    function updateRoute(startLng, startLat, endLng, endLat) {
         const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${startLng},${startLat}&end=${endLng},${endLat}`;
 
         fetch(url)
@@ -539,36 +618,34 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                const indicator = document.getElementById('loading-indicator');
-                if (indicator) {
-                    indicator.remove();
-                }
-
                 if (data.features && data.features.length > 0) {
                     const routeCoordinates = data.features[0].geometry.coordinates;
-
                     const latLngs = routeCoordinates.map(coord => [coord[1], coord[0]]);
 
+                    // Remove existing route if it exists
                     if (routeLayer) {
                         map.removeLayer(routeLayer);
                     }
 
+                    // Add new route
                     routeLayer = L.polyline(latLngs, {
                         color: '#3498db',
                         weight: 5,
                         opacity: 0.7
                     }).addTo(map);
 
-                    map.fitBounds(routeLayer.getBounds(), {
-                        padding: [50, 50]
-                    });
-
+                    // Get route summary
                     const routeSummary = data.features[0].properties.summary;
                     const distance = (routeSummary.distance / 1000).toFixed(1);
                     const duration = Math.round(routeSummary.duration / 60);
 
-                    const infoBox = L.control({position: 'bottomleft'});
-                    infoBox.onAdd = function () {
+                    // Update info box if it exists, or create a new one
+                    if (infoBoxControl) {
+                        map.removeControl(infoBoxControl);
+                    }
+
+                    infoBoxControl = L.control({position: 'bottomleft'});
+                    infoBoxControl.onAdd = function () {
                         const div = L.DomUtil.create('div', 'info-box');
                         div.innerHTML = `
                             <div style="background-color: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2);">
@@ -578,7 +655,77 @@ document.addEventListener('DOMContentLoaded', function () {
                         `;
                         return div;
                     };
-                    infoBox.addTo(map);
+                    infoBoxControl.addTo(map);
+                }
+            })
+            .catch(error => {
+                console.error('Error updating route:', error);
+                // No alert for silent updates
+            });
+    }
+
+    function getDirections(startLng, startLat, endLng, endLat) {
+        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${startLng},${startLat}&end=${endLng},${endLat}`;
+
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Failed to get directions');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Remove loading indicator if it exists
+                const indicator = document.getElementById('loading-indicator');
+                if (indicator) {
+                    indicator.remove();
+                }
+
+                if (data.features && data.features.length > 0) {
+                    const routeCoordinates = data.features[0].geometry.coordinates;
+                    const latLngs = routeCoordinates.map(coord => [coord[1], coord[0]]);
+
+                    // Remove existing route if it exists
+                    if (routeLayer) {
+                        map.removeLayer(routeLayer);
+                    }
+
+                    // Add new route
+                    routeLayer = L.polyline(latLngs, {
+                        color: '#3498db',
+                        weight: 5,
+                        opacity: 0.7
+                    }).addTo(map);
+
+                    // Get route summary
+                    const routeSummary = data.features[0].properties.summary;
+                    const distance = (routeSummary.distance / 1000).toFixed(1);
+                    const duration = Math.round(routeSummary.duration / 60);
+
+                    // Remove existing info box if it exists
+                    if (infoBoxControl) {
+                        map.removeControl(infoBoxControl);
+                    }
+
+                    // Add new info box
+                    infoBoxControl = L.control({position: 'bottomleft'});
+                    infoBoxControl.onAdd = function () {
+                        const div = L.DomUtil.create('div', 'info-box');
+                        div.innerHTML = `
+                            <div style="background-color: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2);">
+                                <strong>Distance:</strong> ${distance} km<br>
+                                <strong>Estimated time:</strong> ${duration} min
+                            </div>
+                        `;
+                        return div;
+                    };
+                    infoBoxControl.addTo(map);
+
+                    // When initial route loads or on refresh, focus on driver
+                    if (isInitialRouteLoad) {
+                        map.setView([startLat, startLng], DRIVER_ZOOM_LEVEL);
+                        isInitialRouteLoad = false;
+                    }
                 } else {
                     alert('No route found. Please try again.');
                 }
@@ -592,6 +739,157 @@ document.addEventListener('DOMContentLoaded', function () {
                 console.error('Error getting directions:', error);
                 alert('Failed to get directions. Please try again.');
             });
+    }
+
+    // Add this function to your code
+    function simulateDriving() {
+        if (!routeLayer || !map) {
+            alert('No active route to simulate driving on!');
+            return;
+        }
+
+        const routePoints = routeLayer.getLatLngs();
+        const totalPoints = routePoints.length;
+        let currentPointIndex = 0;
+
+        // Create a simulation control panel
+        const simControlDiv = document.createElement('div');
+        simControlDiv.id = 'simulation-controls';
+        simControlDiv.innerHTML = `
+        <div style="background-color: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2); margin: 10px;">
+            <h3>Simulation Controls</h3>
+            <p>Point: <span id="sim-progress">0/${totalPoints}</span></p>
+            <button id="sim-faster">Speed Up</button>
+            <button id="sim-slower">Slow Down</button>
+            <button id="sim-stop">Stop Simulation</button>
+        </div>
+    `;
+        document.querySelector('#mapContainer').appendChild(simControlDiv);
+
+        const progressElement = document.getElementById('sim-progress');
+        let simulationSpeed = 500; // milliseconds between updates
+        let lastApiUpdateTime = 0;
+        const API_UPDATE_INTERVAL = 5000; // Only update API every 5 seconds
+
+        // Override the updateDriverLocation function during simulation
+        const originalUpdateDriverLocation = updateDriverLocation;
+        let currentLat, currentLng;
+
+        // Create a local function to update the visual display without API calls
+        function updateDriverVisual(lat, lng) {
+            currentLat = lat;
+            currentLng = lng;
+
+            // Update the driver marker position without API call
+            if (map && driverMarker) {
+                driverMarker.setLatLng([lat, lng]);
+
+                // Center map on driver
+                map.setView([lat, lng], DRIVER_ZOOM_LEVEL);
+
+                // If we have an active route, update the route display
+                if (currentRequest && (navigationPhase === 'to_pickup' || navigationPhase === 'to_dropoff')) {
+                    let destLat, destLng;
+
+                    if (navigationPhase === 'to_pickup') {
+                        destLat = currentRequest.pickup_lat;
+                        destLng = currentRequest.pickup_lng;
+                    } else { // to_dropoff
+                        destLat = currentRequest.dropoff_lat;
+                        destLng = currentRequest.dropoff_lng;
+                    }
+
+                    // Update route visually without API call
+                    if (routeLayer) {
+                        // We keep the existing route for simulation purposes
+                    }
+                }
+            }
+        }
+
+        // Create a function to actually update the backend occasionally
+        function updateDriverAPI() {
+            const now = Date.now();
+            if (now - lastApiUpdateTime >= API_UPDATE_INTERVAL) {
+                lastApiUpdateTime = now;
+                originalUpdateDriverLocation(currentLat, currentLng);
+            }
+        }
+
+        // Replace the global function during simulation
+        updateDriverLocation = function(lat, lng) {
+            updateDriverVisual(lat, lng);
+            updateDriverAPI();
+        };
+
+        // Start the simulation interval
+        let simInterval = setInterval(() => {
+            if (currentPointIndex >= totalPoints) {
+                clearInterval(simInterval);
+                // Restore original function
+                updateDriverLocation = originalUpdateDriverLocation;
+                alert('Simulation complete!');
+                return;
+            }
+
+            const nextPoint = routePoints[currentPointIndex];
+            updateDriverVisual(nextPoint.lat, nextPoint.lng);
+            updateDriverAPI();
+
+            // Update progress display
+            progressElement.textContent = `${currentPointIndex}/${totalPoints}`;
+            currentPointIndex++;
+        }, simulationSpeed);
+
+        // Add event listeners for control buttons
+        document.getElementById('sim-faster').addEventListener('click', () => {
+            simulationSpeed = Math.max(100, simulationSpeed - 100);
+            clearInterval(simInterval);
+            simInterval = setInterval(() => {
+                if (currentPointIndex >= totalPoints) {
+                    clearInterval(simInterval);
+                    // Restore original function
+                    updateDriverLocation = originalUpdateDriverLocation;
+                    alert('Simulation complete!');
+                    return;
+                }
+
+                const nextPoint = routePoints[currentPointIndex];
+                updateDriverVisual(nextPoint.lat, nextPoint.lng);
+                updateDriverAPI();
+
+                progressElement.textContent = `${currentPointIndex}/${totalPoints}`;
+                currentPointIndex++;
+            }, simulationSpeed);
+        });
+
+        document.getElementById('sim-slower').addEventListener('click', () => {
+            simulationSpeed += 100;
+            clearInterval(simInterval);
+            simInterval = setInterval(() => {
+                if (currentPointIndex >= totalPoints) {
+                    clearInterval(simInterval);
+                    // Restore original function
+                    updateDriverLocation = originalUpdateDriverLocation;
+                    alert('Simulation complete!');
+                    return;
+                }
+
+                const nextPoint = routePoints[currentPointIndex];
+                updateDriverVisual(nextPoint.lat, nextPoint.lng);
+                updateDriverAPI();
+
+                progressElement.textContent = `${currentPointIndex}/${totalPoints}`;
+                currentPointIndex++;
+            }, simulationSpeed);
+        });
+
+        document.getElementById('sim-stop').addEventListener('click', () => {
+            clearInterval(simInterval);
+            // Make sure we restore the original function
+            updateDriverLocation = originalUpdateDriverLocation;
+            document.getElementById('simulation-controls').remove();
+        });
     }
 
     window.addEventListener('beforeunload', function () {
