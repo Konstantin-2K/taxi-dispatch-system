@@ -14,13 +14,13 @@ document.addEventListener('DOMContentLoaded', function () {
     let infoBoxControl = null;
     const ORS_API_KEY = '5b3ce3597851110001cf6248a9eb2e6c73314236a94dfb0ad2872f9f';
     let locationPermissionRequested = false;
-    let isInitialRouteLoad = true; // Flag to track if this is the first route load
-    let isRefreshing = false; // Flag to track if we're refreshing a route
+    let isInitialRouteLoad = true;
+    let isRefreshing = false;
 
     let locationWatchId = null;
     let locationUpdateInterval = null;
     const LOCATION_UPDATE_FREQUENCY = 2000;
-    const DRIVER_ZOOM_LEVEL = 16; // Consistent zoom level for driver focus
+    const DRIVER_ZOOM_LEVEL = 16;
 
     // DOM elements
     const driverNameElement = document.getElementById('driverName');
@@ -34,9 +34,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const navToPickupBtn = document.getElementById('nav-to-pickup');
     const navToDropoffBtn = document.getElementById('nav-to-dropoff');
     const completeNavigationBtn = document.getElementById('complete-navigation');
-
-    // Add this after the other buttons in the navigation section
     const simulateBtn = document.createElement('button');
+
     simulateBtn.id = 'simulate-driving';
     simulateBtn.textContent = 'Simulate Driving';
     simulateBtn.className = 'btn';
@@ -65,8 +64,6 @@ document.addEventListener('DOMContentLoaded', function () {
     fetchRequests();
     setupEventListeners();
     initializeLocationTracking();
-
-    // Check for active navigation session on page load
     checkForActiveNavigation();
 
     function checkForActiveNavigation() {
@@ -189,7 +186,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 driverData = driver;
 
                 if (map && (navigationPhase === 'to_pickup' || navigationPhase === 'to_dropoff')) {
-                    // Update driver marker position
                     if (driverMarker) {
                         driverMarker.setLatLng([lat, lng]);
                     } else {
@@ -207,11 +203,7 @@ document.addEventListener('DOMContentLoaded', function () {
                             destLat = currentRequest.dropoff_lat;
                             destLng = currentRequest.dropoff_lng;
                         }
-
-                        // Update the route without showing loading indicator for updates
                         updateRoute(lng, lat, destLng, destLat);
-
-                        // Center map on driver with consistent zoom level
                         map.setView([lat, lng], DRIVER_ZOOM_LEVEL);
                     }
                 }
@@ -513,8 +505,6 @@ document.addEventListener('DOMContentLoaded', function () {
         if (requestsSection) {
             requestsSection.style.display = 'block';
         }
-
-        // Reset all map-related globals
         if (map) {
             map.remove();
             map = null;
@@ -560,7 +550,6 @@ document.addEventListener('DOMContentLoaded', function () {
             endLng = currentRequest.dropoff_lng;
         }
 
-        // Clear existing markers and routes but retain the map
         if (map) {
             map.eachLayer(layer => {
                 if (layer instanceof L.Marker || layer instanceof L.Polyline) {
@@ -568,21 +557,18 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             });
 
-            // Remove the info box if it exists
             if (infoBoxControl) {
                 map.removeControl(infoBoxControl);
                 infoBoxControl = null;
             }
         }
 
-        // Create new markers
         driverMarker = L.marker([startLat, startLng]).addTo(map)
             .bindPopup(phase === 'to_pickup' ? 'Your Location' : 'Pickup Location');
 
         destinationMarker = L.marker([endLat, endLng]).addTo(map)
             .bindPopup(phase === 'to_pickup' ? 'Pickup Location' : 'Dropoff Location');
 
-        // Show loading indicator only for initial route calculation
         if (isInitialRouteLoad) {
             const loadingIndicator = document.createElement('div');
             loadingIndicator.id = 'loading-indicator';
@@ -606,7 +592,6 @@ document.addEventListener('DOMContentLoaded', function () {
         getDirections(startLng, startLat, endLng, endLat);
     }
 
-    // New function for silent route updates without loading indicators
     function updateRoute(startLng, startLat, endLng, endLat) {
         const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${startLng},${startLat}&end=${endLng},${endLat}`;
 
@@ -622,24 +607,20 @@ document.addEventListener('DOMContentLoaded', function () {
                     const routeCoordinates = data.features[0].geometry.coordinates;
                     const latLngs = routeCoordinates.map(coord => [coord[1], coord[0]]);
 
-                    // Remove existing route if it exists
                     if (routeLayer) {
                         map.removeLayer(routeLayer);
                     }
 
-                    // Add new route
                     routeLayer = L.polyline(latLngs, {
                         color: '#3498db',
                         weight: 5,
                         opacity: 0.7
                     }).addTo(map);
 
-                    // Get route summary
                     const routeSummary = data.features[0].properties.summary;
                     const distance = (routeSummary.distance / 1000).toFixed(1);
                     const duration = Math.round(routeSummary.duration / 60);
 
-                    // Update info box if it exists, or create a new one
                     if (infoBoxControl) {
                         map.removeControl(infoBoxControl);
                     }
@@ -660,7 +641,6 @@ document.addEventListener('DOMContentLoaded', function () {
             })
             .catch(error => {
                 console.error('Error updating route:', error);
-                // No alert for silent updates
             });
     }
 
@@ -675,7 +655,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 return response.json();
             })
             .then(data => {
-                // Remove loading indicator if it exists
                 const indicator = document.getElementById('loading-indicator');
                 if (indicator) {
                     indicator.remove();
@@ -685,29 +664,24 @@ document.addEventListener('DOMContentLoaded', function () {
                     const routeCoordinates = data.features[0].geometry.coordinates;
                     const latLngs = routeCoordinates.map(coord => [coord[1], coord[0]]);
 
-                    // Remove existing route if it exists
                     if (routeLayer) {
                         map.removeLayer(routeLayer);
                     }
 
-                    // Add new route
                     routeLayer = L.polyline(latLngs, {
                         color: '#3498db',
                         weight: 5,
                         opacity: 0.7
                     }).addTo(map);
 
-                    // Get route summary
                     const routeSummary = data.features[0].properties.summary;
                     const distance = (routeSummary.distance / 1000).toFixed(1);
                     const duration = Math.round(routeSummary.duration / 60);
 
-                    // Remove existing info box if it exists
                     if (infoBoxControl) {
                         map.removeControl(infoBoxControl);
                     }
 
-                    // Add new info box
                     infoBoxControl = L.control({position: 'bottomleft'});
                     infoBoxControl.onAdd = function () {
                         const div = L.DomUtil.create('div', 'info-box');
@@ -721,7 +695,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     };
                     infoBoxControl.addTo(map);
 
-                    // When initial route loads or on refresh, focus on driver
                     if (isInitialRouteLoad) {
                         map.setView([startLat, startLng], DRIVER_ZOOM_LEVEL);
                         isInitialRouteLoad = false;
@@ -741,7 +714,6 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     }
 
-    // Add this function to your code
     function simulateDriving() {
         if (!routeLayer || !map) {
             alert('No active route to simulate driving on!');
@@ -752,42 +724,36 @@ document.addEventListener('DOMContentLoaded', function () {
         const totalPoints = routePoints.length;
         let currentPointIndex = 0;
 
-        // Create a simulation control panel
         const simControlDiv = document.createElement('div');
         simControlDiv.id = 'simulation-controls';
         simControlDiv.innerHTML = `
-        <div style="background-color: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2); margin: 10px;">
-            <h3>Simulation Controls</h3>
-            <p>Point: <span id="sim-progress">0/${totalPoints}</span></p>
-            <button id="sim-faster">Speed Up</button>
-            <button id="sim-slower">Slow Down</button>
-            <button id="sim-stop">Stop Simulation</button>
-        </div>
-    `;
+    <div style="background-color: white; padding: 10px; border-radius: 5px; box-shadow: 0 0 10px rgba(0,0,0,0.2); margin: 10px; position: absolute; top: 10px; right: 10px; z-index: 1000;">
+        <h3>Simulation Controls</h3>
+        <p>Point: <span id="sim-progress">0/${totalPoints}</span></p>
+        <button id="sim-faster">Speed Up</button>
+        <button id="sim-slower">Slow Down</button>
+        <button id="sim-stop">Stop Simulation</button>
+    </div>
+`;
         document.querySelector('#mapContainer').appendChild(simControlDiv);
 
         const progressElement = document.getElementById('sim-progress');
-        let simulationSpeed = 500; // milliseconds between updates
+        let simulationSpeed = 500;
         let lastApiUpdateTime = 0;
-        const API_UPDATE_INTERVAL = 5000; // Only update API every 5 seconds
+        const API_UPDATE_INTERVAL = 3000;
 
-        // Override the updateDriverLocation function during simulation
         const originalUpdateDriverLocation = updateDriverLocation;
         let currentLat, currentLng;
 
-        // Create a local function to update the visual display without API calls
         function updateDriverVisual(lat, lng) {
             currentLat = lat;
             currentLng = lng;
 
-            // Update the driver marker position without API call
             if (map && driverMarker) {
                 driverMarker.setLatLng([lat, lng]);
 
-                // Center map on driver
                 map.setView([lat, lng], DRIVER_ZOOM_LEVEL);
 
-                // If we have an active route, update the route display
                 if (currentRequest && (navigationPhase === 'to_pickup' || navigationPhase === 'to_dropoff')) {
                     let destLat, destLng;
 
@@ -798,8 +764,6 @@ document.addEventListener('DOMContentLoaded', function () {
                         destLat = currentRequest.dropoff_lat;
                         destLng = currentRequest.dropoff_lng;
                     }
-
-                    // Update route visually without API call
                     if (routeLayer) {
                         // We keep the existing route for simulation purposes
                     }
@@ -807,7 +771,6 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Create a function to actually update the backend occasionally
         function updateDriverAPI() {
             const now = Date.now();
             if (now - lastApiUpdateTime >= API_UPDATE_INTERVAL) {
@@ -816,17 +779,14 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         }
 
-        // Replace the global function during simulation
         updateDriverLocation = function(lat, lng) {
             updateDriverVisual(lat, lng);
             updateDriverAPI();
         };
 
-        // Start the simulation interval
         let simInterval = setInterval(() => {
             if (currentPointIndex >= totalPoints) {
                 clearInterval(simInterval);
-                // Restore original function
                 updateDriverLocation = originalUpdateDriverLocation;
                 alert('Simulation complete!');
                 return;
@@ -836,19 +796,16 @@ document.addEventListener('DOMContentLoaded', function () {
             updateDriverVisual(nextPoint.lat, nextPoint.lng);
             updateDriverAPI();
 
-            // Update progress display
             progressElement.textContent = `${currentPointIndex}/${totalPoints}`;
             currentPointIndex++;
         }, simulationSpeed);
 
-        // Add event listeners for control buttons
         document.getElementById('sim-faster').addEventListener('click', () => {
             simulationSpeed = Math.max(100, simulationSpeed - 100);
             clearInterval(simInterval);
             simInterval = setInterval(() => {
                 if (currentPointIndex >= totalPoints) {
                     clearInterval(simInterval);
-                    // Restore original function
                     updateDriverLocation = originalUpdateDriverLocation;
                     alert('Simulation complete!');
                     return;
@@ -869,7 +826,6 @@ document.addEventListener('DOMContentLoaded', function () {
             simInterval = setInterval(() => {
                 if (currentPointIndex >= totalPoints) {
                     clearInterval(simInterval);
-                    // Restore original function
                     updateDriverLocation = originalUpdateDriverLocation;
                     alert('Simulation complete!');
                     return;
@@ -886,7 +842,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.getElementById('sim-stop').addEventListener('click', () => {
             clearInterval(simInterval);
-            // Make sure we restore the original function
             updateDriverLocation = originalUpdateDriverLocation;
             document.getElementById('simulation-controls').remove();
         });
