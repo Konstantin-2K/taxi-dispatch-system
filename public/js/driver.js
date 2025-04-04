@@ -21,8 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
     let locationUpdateInterval = null;
     const LOCATION_UPDATE_FREQUENCY = 2000;
     const DRIVER_ZOOM_LEVEL = 16;
-
-    // DOM elements
     const driverNameElement = document.getElementById('driverName');
     const statusSelectElement = document.getElementById('statusSelect');
     const requestsListElement = document.getElementById('requestsList');
@@ -199,7 +197,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         if (navigationPhase === 'to_pickup') {
                             destLat = currentRequest.pickup_lat;
                             destLng = currentRequest.pickup_lng;
-                        } else { // to_dropoff
+                        } else {
                             destLat = currentRequest.dropoff_lat;
                             destLng = currentRequest.dropoff_lng;
                         }
@@ -760,12 +758,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (navigationPhase === 'to_pickup') {
                         destLat = currentRequest.pickup_lat;
                         destLng = currentRequest.pickup_lng;
-                    } else { // to_dropoff
+                    } else {
                         destLat = currentRequest.dropoff_lat;
                         destLng = currentRequest.dropoff_lng;
                     }
                     if (routeLayer) {
-                        // We keep the existing route for simulation purposes
                     }
                 }
             }

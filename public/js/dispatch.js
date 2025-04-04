@@ -6,8 +6,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }).addTo(map);
 
     const socket = io();
-    const ORS_API_KEY = '5b3ce3597851110001cf6248a9eb2e6c73314236a94dfb0ad2872f9f';
-
     const clearBtn = document.getElementById('clearBtn');
     const dispatchBtn = document.getElementById('dispatchBtn');
     const requestsList = document.getElementById('requestsList');
@@ -111,7 +109,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     function calculateRoute(pickup, dropoff) {
-        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${pickup.lng},${pickup.lat}&end=${dropoff.lng},${dropoff.lat}`;
+        const url = `http://192.168.0.153:8080/ors/v2/directions/driving-car?start=${pickup.lng},${pickup.lat}&end=${dropoff.lng},${dropoff.lat}`;
 
         fetch(url)
             .then(response => {
