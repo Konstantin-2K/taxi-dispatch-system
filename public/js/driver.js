@@ -457,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function fetchETA(driverLat, driverLng, pickupLat, pickupLng) {
-        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${driverLng},${driverLat}&end=${pickupLng},${pickupLat}`;
+        const url = `http://192.168.0.153:8080/ors/v2/directions/driving-car?start=${driverLng},${driverLat}&end=${pickupLng},${pickupLat}`;
 
         return fetch(url)
             .then(response => response.json())
@@ -593,7 +593,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function updateRoute(startLng, startLat, endLng, endLat) {
-        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${startLng},${startLat}&end=${endLng},${endLat}`;
+        const url = `http://192.168.0.153:8080/ors/v2/directions/driving-car?start=${startLng},${startLat}&end=${endLng},${endLat}`;
 
         fetch(url)
             .then(response => {
@@ -645,7 +645,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function getDirections(startLng, startLat, endLng, endLat) {
-        const url = `https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${startLng},${startLat}&end=${endLng},${endLat}`;
+        const url = `http://192.168.0.153:8080/ors/v2/directions/driving-car?start=${startLng},${startLat}&end=${endLng},${endLat}`;
 
         fetch(url)
             .then(response => {
@@ -740,7 +740,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const progressElement = document.getElementById('sim-progress');
         let simulationSpeed = 500;
         let lastApiUpdateTime = 0;
-        const API_UPDATE_INTERVAL = 3000;
+        const API_UPDATE_INTERVAL = 500;
 
         const originalUpdateDriverLocation = updateDriverLocation;
         let currentLat, currentLng;

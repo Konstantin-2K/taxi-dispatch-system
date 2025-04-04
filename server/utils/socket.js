@@ -4,7 +4,7 @@ const { createClient } = require('redis');
 async function setupSocket(io) {
     const pubClient = createClient({
         socket: {
-            host: '192.168.0.170',
+            host: '192.168.0.153',
             port: 6379
         },
         password: 'redispass'
