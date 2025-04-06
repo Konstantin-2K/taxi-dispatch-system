@@ -13,10 +13,6 @@ const isAuthenticated = (req, res, next) => {
         const decoded = jwt.verify(token, JWT_SECRET);
         req.user = decoded;
 
-        if (req.headers['x-forwarded-proto'] === 'https') {
-            req.secure = true;
-        }
-
         next();
     } catch (error) {
         console.error('Authentication error:', error);

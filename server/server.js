@@ -9,7 +9,7 @@ const { initDatabase } = require('./config/db');
 
 const driversRoutes = require('./routes/driver.js');
 const requestsRoutes = require('./routes/requests');
-const authRoutes = require('./routes/auth'); // Add this
+const authRoutes = require('./routes/auth');
 
 const { isAuthenticated, isDispatcher, isDriver, isOwnDriverPage } = require('./middleware/auth');
 
@@ -38,13 +38,11 @@ app.use(session({
     resave: false,
     saveUninitialized: false,
     cookie: {
-        secure: true,
+        secure: false,
         httpOnly: true,
-        sameSite: 'none'
+        sameSite: 'lax'
     }
 }));
-
-app.set('trust proxy', true);
 
 app.use(express.static(path.join(__dirname, '../public')));
 
