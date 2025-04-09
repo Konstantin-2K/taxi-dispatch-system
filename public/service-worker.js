@@ -1,4 +1,4 @@
-const CACHE_NAME = 'dispatch-app-v1';
+/*const CACHE_NAME = 'dispatch-app-v1';
 const urlsToCache = [
     '/',
     '/login',
@@ -85,4 +85,4 @@ self.addEventListener('message', event => {
     if (event.data && event.data.type === 'SKIP_WAITING') {
         self.skipWaiting();
     }
-});
+});*/
