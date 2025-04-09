@@ -2,7 +2,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const map = L.map('map').setView([43.2141, 27.9147], 13);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+        maxZoom: 16
     }).addTo(map);
 
     const socket = io();
@@ -31,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
     logoutBtn.textContent = 'Logout';
     logoutBtn.style.backgroundColor = '#95a5a6';
     logoutBtn.style.color = 'white';
-    logoutBtn.addEventListener('click', function() {
+    logoutBtn.addEventListener('click', function () {
         window.location.href = '/api/auth/logout';
     });
     header.appendChild(logoutBtn);
@@ -512,26 +513,30 @@ document.addEventListener('DOMContentLoaded', function () {
                     const formattedTime = createdAt.toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
 
                     const assignedDriver = request.driver_name
-                        ? `<div>Assigned to: ${request.driver_name}</div>`
+                        ? `<div><hr><b>Assigned to:</b> ${request.driver_name}</div>`
                         : '';
 
                     requestEl.innerHTML = `
                 <h3>Request #${request.id}</h3>
                 <div class="request-details">
                     <span class="status ${request.status}">${request.status}</span>
-                    <div>Created at: ${formattedTime}</div>
+                    <div><b>Created at:</b> ${formattedTime}</div>
                         ${assignedDriver}
                     <div>
-                        Pickup: ${request.pickup_name}
+                    <hr>
+                        <b>Pickup:</b> ${request.pickup_name}
                     </div>
                     <div>
-                        Dropoff: ${request.dropoff_name}
+                    <hr>
+                        <b>Dropoff:</b> ${request.dropoff_name}
                     </div>
                     <div>
-                        Distance: ${request.distance} km
+                    <hr>
+                        <b>Distance:</b> ${request.distance} km
                     </div>
                     <div>
-                        Est. Time: ${request.estimated_time} min
+                    <hr>
+                        <b>Est. Time:</b> ${request.estimated_time} min
                     </div>
                 </div>`;
 
@@ -621,9 +626,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     socket.on('driver_eta', function (data) {
-        const { request_id, eta } = data;
+        const {request_id, eta} = data;
 
-        const requestItems= document.querySelectorAll('.request-item');
+        const requestItems = document.querySelectorAll('.request-item');
         const matchingRequest = Array.from(requestItems).find(item => {
             const h3Element = item.querySelector('h3');
             return h3Element && h3Element.textContent.trim() === `Request #${request_id}`;
@@ -635,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 etaElement.className = 'eta-info';
                 matchingRequest.appendChild(etaElement);
             }
-            etaElement.innerHTML = `<strong>Driver ETA:</strong> ${eta} min`;
+            etaElement.innerHTML = `<hr><strong>Driver ETA:</strong> ${eta} min`;
         }
     });
 

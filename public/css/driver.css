@@ -27,9 +27,20 @@ header {
 
 .driver-info {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: center;
-    margin-top: 10px;
+}
+
+#driverName {
+    margin-right: auto;
+}
+
+#controls {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: flex-start;
 }
 
 .status-controls {
@@ -46,6 +57,16 @@ header {
     padding: 8px;
     border-radius: 4px;
     border: 1px solid #ddd;
+}
+
+#logoutBtn {
+    background-color: #95a5a6;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    margin-left: 10px;
 }
 
 main {
@@ -223,6 +244,21 @@ main {
     margin: 10px 0;
 }
 
+.navigation-info {
+    font-size: 17px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    width: 100%;
+}
+
+.navigation-info.expanded {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+}
+
 .navigation-controls {
     display: flex;
     gap: 10px;
@@ -242,14 +278,45 @@ footer {
     color: #7f8c8d;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 768px) and (min-width: 430px) {
     .driver-info {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
     }
 
-    .status-controls {
-        margin-top: 10px;
+    #driverName {
+        margin-top: auto;
+    }
+
+    #logoutBtn {
+        margin-left: auto;
+    }
+
+    #controls {
+        margin: 0 0 0 10px;
+        flex-direction: column;
+    }
+
+    .navigation-controls {
+        flex-direction: column;
+    }
+}
+
+
+@media (max-width: 430px) {
+    .driver-info {
+        flex-direction: row;
+    }
+
+    #driverName {
+        margin-top: auto;
+    }
+
+    #logoutBtn {
+        margin-left: auto;
+    }
+
+    #controls {
+        flex-direction: column;
     }
 
     .navigation-controls {

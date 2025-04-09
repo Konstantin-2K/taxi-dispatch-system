@@ -33,6 +33,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const navToDropoffBtn = document.getElementById('nav-to-dropoff');
     const completeNavigationBtn = document.getElementById('complete-navigation');
     const simulateBtn = document.createElement('button');
+    let pickup = document.getElementById('pickup');
+    let dropoff = document.getElementById('dropoff');
 
     simulateBtn.id = 'simulate-driving';
     simulateBtn.textContent = 'Simulate Driving';
@@ -41,16 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelector('.navigation-controls').appendChild(simulateBtn);
 
     const header = document.querySelector('header .driver-info');
-    const logoutBtn = document.createElement('button');
-    logoutBtn.id = 'logoutBtn';
-    logoutBtn.textContent = 'Logout';
-    logoutBtn.style.backgroundColor = '#95a5a6';
-    logoutBtn.style.color = 'white';
-    logoutBtn.style.padding = '8px 15px';
-    logoutBtn.style.borderRadius = '4px';
-    logoutBtn.style.border = 'none';
-    logoutBtn.style.cursor = 'pointer';
-    logoutBtn.style.marginLeft = '10px';
+    const logoutBtn = document.getElementById('logoutBtn');
     logoutBtn.addEventListener('click', function() {
         window.location.href = '/api/auth/logout';
     });
@@ -528,7 +521,10 @@ document.addEventListener('DOMContentLoaded', function () {
             map = setupLeaflet();
         }
 
-        navigationPhaseInfo.textContent = phase === 'to_pickup' ? 'To Pickup Location' : 'To Dropoff Location';
+        //navigationPhaseInfo.textContent = phase === 'to_pickup' ? 'To Pickup Location' : 'To Dropoff Location';
+
+        pickup.innerHTML = `<b>Pickup: </b>` + currentRequest.pickup_name;
+        dropoff.innerHTML = `<b>Dropoff: </b>` + currentRequest.dropoff_name;
 
         navToPickupBtn.disabled = phase === 'to_pickup';
         navToDropoffBtn.disabled = phase === 'to_dropoff';

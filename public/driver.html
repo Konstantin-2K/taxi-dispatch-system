@@ -11,20 +11,25 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#800080">
+
 </head>
 <body>
 <div class="container">
     <header>
-        <h1>Driver Dashboard</h1>
         <div class="driver-info">
             <h2 id="driverName">Loading...</h2>
-            <div class="status-controls">
-                <label for="statusSelect">Status:</label>
-                <select id="statusSelect">
-                    <option value="available">Available</option>
-                    <option value="busy">Busy</option>
-                    <option value="offline">Offline</option>
-                </select>
+            <div id="controls">
+                <div class="status-controls">
+                    <label for="statusSelect">Status:</label>
+                    <select id="statusSelect">
+                        <option value="available">Available</option>
+                        <option value="busy">Busy</option>
+                        <option value="offline">Offline</option>
+                    </select>
+                </div>
+                <div><button id="logoutBtn">Logout</button></div>
             </div>
         </div>
     </header>
@@ -43,8 +48,14 @@
 
         <div id="navigation-section" class="navigation-section" style="display: none;">
             <div class="navigation-header">
-                <h2>Navigation</h2>
-                <div id="navigation-phase-info" class="phase-info">To Pickup Location</div>
+                <div>
+                    <h2>Navigation</h2>
+                    <div id="navigation-phase-info" class="phase-info"></div>
+                </div>
+                <div id="navigation-info" onclick="toggleExpand(this)" class="navigation-info">
+                    <p id="pickup">Pickup: </p>
+                    <p id="dropoff">Dropoff: </p>
+                </div>
                 <div class="navigation-controls">
                     <button id="nav-to-pickup" class="btn btn-primary">Navigate to Pickup</button>
                     <button id="nav-to-dropoff" class="btn btn-primary" disabled>Navigate to Dropoff</button>
@@ -60,7 +71,15 @@
         <p>Taxi Dispatch System &copy; 2025</p>
     </footer>
 </div>
+<!--<script src="/js/pwa.js"></script>
+<script src="/js/register-sw.js"></script>-->
 <script src="/socket.io/socket.io.js"></script>
 <script src="/js/driver.js"></script>
+<script>
+    function toggleExpand(element) {
+        element.classList.toggle('expanded');
+    }
+</script>
+
 </body>
 </html>

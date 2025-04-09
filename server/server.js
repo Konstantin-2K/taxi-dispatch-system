@@ -6,13 +6,10 @@ const cors = require('cors');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const { initDatabase } = require('./config/db');
-
 const driversRoutes = require('./routes/driver.js');
 const requestsRoutes = require('./routes/requests');
 const authRoutes = require('./routes/auth');
-
 const { isAuthenticated, isDispatcher, isDriver, isOwnDriverPage } = require('./middleware/auth');
-
 const setupSocket = require('./utils/socket');
 const session = require("express-session");
 
@@ -45,6 +42,16 @@ app.use(session({
 }));
 
 app.use(express.static(path.join(__dirname, '../public')));
+
+/*app.use((req, res, next) => {
+    if (req.url === '/service-worker.js') {
+        res.setHeader('Service-Worker-Allowed', '/');
+        res.setHeader('Cache-Control', 'no-cache');
+    }
+    next();
+});*/
+
+
 
 app.use((req, res, next) => {
     req.io = io;
@@ -84,6 +91,22 @@ app.get('/driver/:id', isAuthenticated, isOwnDriverPage, (req, res) => {
 app.get('/', (req, res) => {
     res.redirect('/login');
 });
+
+/*app.get('/manifest.json', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/manifest.json'));
+});
+
+app.get('/offline.html', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/offline.html'));
+});
+
+app.get('/service-worker.js', (req, res) => {
+    res.setHeader('Content-Type', 'application/javascript');
+    res.setHeader('Service-Worker-Allowed', '/');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.sendFile(path.join(__dirname, '../public/service-worker.js'));
+});*/
+
 
 const PORT = process.env.PORT || 3000;
 
